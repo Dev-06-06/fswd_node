@@ -1,0 +1,47 @@
+.reports-container {
+  padding: 20px;
+}
+
+.reports-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.reports-table th, .reports-table td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+}
+
+.reports-table th {
+  background-color: #f7f7f7;
+  font-weight: bold;
+}
+
+.tx-type {
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: white;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.tx-type.buy {
+  background-color: #27ae60; /* Green */
+}
+
+.tx-type.sell {
+  background-color: #c0392b; /* Red */
+}
+
+.tx-type.deposit {
+  background-color: #3498db; /* Blue */
+}
+
+.error {
+  color: red;
+  font-weight: bold;
+}

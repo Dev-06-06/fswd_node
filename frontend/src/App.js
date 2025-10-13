@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
+import './Auth.css';
 
 // Import Context and Components
 import { AuthContext } from './context/AuthContext';
@@ -17,12 +18,19 @@ import AccountPage from './pages/AccountPage';
 function AuthPage() {
   const [showLogin, setShowLogin] = useState(true);
   return (
-    <div className="auth-container">
-      <AuthForm formType={showLogin ? 'Login' : 'Register'} />
-      <hr />
-      <button onClick={() => setShowLogin(!showLogin)}>
-        {showLogin ? 'Need to create an account? (Sign Up)' : 'Already have an account? (Login)'}
-      </button>
+    <div className="auth-page-container">
+      <div className="branding-panel">
+        <h1>MyPortfolio</h1>
+        <p>Your complete solution for managing investments and tracking your financial growth.</p>
+      </div>
+      <div className="form-panel">
+        <div className="auth-card">
+          <AuthForm formType={showLogin ? 'Login' : 'Register'} />
+          <button onClick={() => setShowLogin(!showLogin)} className="toggle-auth">
+            {showLogin ? 'Need an account? Sign Up' : 'Already have an account? Login'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

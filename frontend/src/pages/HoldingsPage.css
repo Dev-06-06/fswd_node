@@ -64,3 +64,17 @@
 .invest-button:hover {
   background-color: #2980b9;
 }
+/* In frontend/src/pages/HoldingsPage.css */
+
+.sell-button {
+  background-color: #e74c3c; /* Red */
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.sell-button:hover {
+  background-color: #c0392b;
+}

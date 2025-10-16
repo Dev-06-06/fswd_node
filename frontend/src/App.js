@@ -1,12 +1,16 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify'; // --- 1. IMPORT TOAST CONTAINER ---
+import 'react-toastify/dist/ReactToastify.css'; // --- 2. IMPORT THE CSS ---
 import './App.css';
 import './Auth.css';
+import axios from 'axios';
 
 // Import Context and Components
 import { AuthContext } from './context/AuthContext';
 import AuthForm from './AuthForm';
 import Navbar from './components/Navbar';
+import WelcomeModal from './components/WelcomeModal';
 
 // Import Page Components
 import DashboardPage from './pages/DashboardPage';
@@ -14,7 +18,7 @@ import HoldingsPage from './pages/HoldingsPage';
 import ReportsPage from './pages/ReportsPage';
 import AccountPage from './pages/AccountPage';
 
-// This component will group our login/register forms for the /login route
+// ... (The AuthPage function remains exactly the same)
 function AuthPage() {
   const [showLogin, setShowLogin] = useState(true);
   return (
@@ -35,24 +39,56 @@ function AuthPage() {
   );
 }
 
+
 function App() {
-  const { user } = useContext(AuthContext);
+  const { user, updateUser } = useContext(AuthContext);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+  useEffect(() => {
+    if (user && !user.full_name) {
+      setShowWelcomeModal(true);
+    } else {
+      setShowWelcomeModal(false);
+    }
+  }, [user]);
+
+  const handleNameConfirm = async (name) => {
+    try {
+      await axios.put(`http://127.0.0.1:5000/api/account/profile`, {
+        username: user.username,
+        full_name: name
+      });
+      updateUser({ full_name: name });
+      setShowWelcomeModal(false);
+    } catch (err) {
+      alert("Could not save your name. Please try again later.");
+    }
+  };
 
   return (
     <BrowserRouter>
-      {/* The Navbar will only be shown when a user is logged in */}
+      {/* --- 3. ADD THE TOAST CONTAINER HERE --- */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+      
       {user && <Navbar />}
+      {showWelcomeModal && <WelcomeModal onConfirm={handleNameConfirm} />}
       <div className="main-content">
         <Routes>
-          {/* If user is logged in, show dashboard. Otherwise, redirect to login */}
           <Route path="/" element={user ? <DashboardPage /> : <Navigate to="/login" />} />
-          
-          {/* Protected Routes - only accessible if a user is logged in */}
           <Route path="/holdings" element={user ? <HoldingsPage /> : <Navigate to="/login" />} />
           <Route path="/reports" element={user ? <ReportsPage /> : <Navigate to="/login" />} />
           <Route path="/account" element={user ? <AccountPage /> : <Navigate to="/login" />} />
-          
-          {/* If user is logged in, redirect from /login to dashboard. Otherwise, show AuthPage */}
           <Route path="/login" element={!user ? <AuthPage /> : <Navigate to="/" />} />
         </Routes>
       </div>
@@ -61,3 +97,4 @@ function App() {
 }
 
 export default App;
+

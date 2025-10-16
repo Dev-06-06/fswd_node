@@ -1,18 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
+import { AuthContext } from '../context/AuthContext';
+import Spinner from '../components/Spinner'; // --- 1. IMPORT SPINNER ---
 import './DashboardPage.css';
 
 function DashboardPage() {
-  // ... (useState, useEffect, loading, and error handling code remains exactly the same)
+  const { user } = useContext(AuthContext);
   const [summaryData, setSummaryData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!user) { setLoading(false); return; }
+      setLoading(true);
       try {
-        const response = await axios.get('http://127.0.0.1:5000/dashboard/summary');
+        const response = await axios.get(`http://127.0.0.1:5000/dashboard/summary?username=${user.username}`);
         setSummaryData(response.data);
       } catch (err) {
         setError('Failed to fetch summary data.');
@@ -20,44 +24,44 @@ function DashboardPage() {
         setLoading(false);
       }
     };
-    fetchData();
-  }, []);
 
-  if (loading) return <div>Loading Dashboard...</div>;
+    fetchData();
+  }, [user]);
+
+  // --- 2. USE THE SPINNER ---
+  if (loading) {
+    return (
+        <div className="dashboard-container">
+            <Spinner />
+        </div>
+    );
+  }
+  
   if (error) return <div className="error">{error}</div>;
   
+  if (!summaryData || summaryData.totalPortfolioValue === 0) {
+    return (
+      <div className="dashboard-container">
+        <h2>Welcome, {user.full_name || user.username}!</h2>
+        <p>Your dashboard is empty. Go to the Holdings page to add your first stock!</p>
+      </div>
+    );
+  }
+
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
 
-// In frontend/src/pages/DashboardPage.js
-
-return (
+  return (
     <div className="dashboard-container">
       <div className="stats-cards">
         <div className="card">
           <h3>Portfolio Value</h3>
-          {/* --- CHANGE THIS LINE --- */}
-          <p>
-            {summaryData.totalPortfolioValue.toLocaleString('en-IN', {
-              style: 'currency',
-              currency: 'INR',
-              minimumFractionDigits: 0,
-            })}
-          </p>
+          <p>{summaryData.totalPortfolioValue.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 })}</p>
         </div>
         <div className="card">
           <h3>Net Profit/Loss</h3>
-          {/* --- AND CHANGE THIS LINE --- */}
-          <p className={summaryData.totalProfitLoss >= 0 ? 'profit' : 'loss'}>
-            {summaryData.totalProfitLoss.toLocaleString('en-IN', {
-              style: 'currency',
-              currency: 'INR',
-              minimumFractionDigits: 0,
-            })}
-          </p>
+          <p className={summaryData.totalProfitLoss >= 0 ? 'profit' : 'loss'}>{summaryData.totalProfitLoss.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 })}</p>
         </div>
       </div>
-
-      {/* The rest of the file (charts-container) remains exactly the same */}
       <div className="charts-container">
         <div className="line-charts-wrapper">
           <div className="chart-card">
@@ -73,7 +77,6 @@ return (
               </LineChart>
             </ResponsiveContainer>
           </div>
-          
           <div className="chart-card">
             <h3>Profit/Loss History</h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -89,21 +92,11 @@ return (
             </ResponsiveContainer>
           </div>
         </div>
-        
         <div className="chart-card">
           <h3>Account Overview</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
-              <Pie
-                data={summaryData.assetAllocation}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-              >
+              <Pie data={summaryData.assetAllocation} cx="50%" cy="50%" labelLine={false} outerRadius={100} fill="#8884d8" dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
                 {summaryData.assetAllocation.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
@@ -118,3 +111,4 @@ return (
 }
 
 export default DashboardPage;
+

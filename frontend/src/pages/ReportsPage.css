@@ -1,219 +1,118 @@
+/* General Container */
 .reports-container {
   padding: 20px;
+  max-width: 900px; /* Adjusted width for better layout */
+  margin: 20px auto;
 }
 
+/* Header and View Toggle */
 .reports-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
 }
+.reports-header h2 { margin: 0; color: #333; }
+.view-toggle button { background: #f0f0f0; border: 1px solid #ccc; padding: 10px 15px; cursor: pointer; margin-left: -1px; transition: background-color 0.2s, color 0.2s; }
+.view-toggle button:first-child { border-radius: 5px 0 0 5px; margin-left: 0; }
+.view-toggle button:last-child { border-radius: 0 5px 5px 0; }
+.view-toggle button.active { background-color: #3498db; color: white; border-color: #3498db; z-index: 2; position: relative; }
+.view-toggle button:not(.active):hover { background-color: #e0e0e0; }
 
-.reports-header h2 {
-  margin: 0;
+/* General Table Styling */
+.reports-table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border-radius: 5px; overflow: hidden; }
+.reports-table th, .reports-table td { border: 1px solid #ddd; padding: 12px 15px; text-align: left; vertical-align: middle; }
+.reports-table th { background-color: #f7f9fc; font-weight: 600; color: #555; border-bottom: 2px solid #ddd; }
+.reports-table tr:nth-child(even) { background-color: #fdfdfd; }
+.reports-table tr:hover { background-color: #f1f5f9; }
+
+/* Transaction Type Styling */
+.tx-type { padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; font-size: 0.8em; text-transform: uppercase; display: inline-block; }
+.tx-type.buy { background-color: #27ae60; }
+.tx-type.sell { background-color: #c0392b; }
+.tx-type.deposit { background-color: #3498db; }
+
+/* Profit/Loss Colors (used in multiple tables and CIBIL) */
+:root { /* Define CSS variables for colors */
+  --profit-color: #27ae60;
+  --loss-color: #c0392b;
+  --warning-color: #f39c12;
+  --neutral-color: #3498db;
 }
+.profit { color: var(--profit-color); }
+.loss { color: var(--loss-color); }
 
-/* --- View Toggle Buttons --- */
-.view-toggle {
-  display: flex;
-}
+/* Real Return Section Specific */
+.inflation-note { font-size: 0.9em; color: #777; text-align: center; margin: -10px 0 15px 0; }
 
-.view-toggle button {
-  background: #f0f0f0;
-  border: 1px solid #ccc;
-  padding: 10px 15px;
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.view-toggle button:first-child {
-  border-radius: 5px 0 0 5px;
-}
-
-.view-toggle button:last-child {
-  border-radius: 0 5px 5px 0;
-}
-
-.view-toggle button:not(:last-child) {
-  border-right: none;
-}
-
-.view-toggle button.active {
-  background-color: #3498db;
-  color: white;
-  border-color: #3498db;
-}
-
-/* --- Shared Table Styles --- */
-.reports-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  background-color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.reports-table th, .reports-table td {
-  border: 1px solid #ddd;
-  padding: 12px;
-  text-align: left;
-}
-
-.reports-table th {
-  background-color: #f7f7f7;
-  font-weight: bold;
-}
-
-/* --- Transaction Type Tags (BUY/SELL) --- */
-.tx-type {
-  padding: 4px 8px;
-  border-radius: 4px;
-  color: white;
-  font-weight: bold;
-  text-transform: uppercase;
-  font-size: 0.8rem;
-}
-
-.tx-type.buy {
-  background-color: #27ae60; /* Green */
-}
-
-.tx-type.sell {
-  background-color: #c0392b; /* Red */
-}
-
-.tx-type.deposit {
-  background-color: #3498db; /* Blue */
-}
-
-/* --- Shared Profit/Loss Colors --- */
-.profit {
-  color: #27ae60; /* Green */
-}
-
-.loss {
-  color: #c0392b; /* Red */
-}
-
-.error {
-  color: red;
-  font-weight: bold;
-}
-
-/* --- CIBIL Score View Styles --- */
-.cibil-container {
-  display: flex;
-  flex-wrap: wrap; /* Allows wrapping on smaller screens */
-  gap: 30px;
-  align-items: flex-start;
+/* --- CIBIL SCORE VIEW STYLING (IMPROVED UI) --- */
+.cibil-score-view.improved-layout {
   background-color: white;
   padding: 30px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Gauge Wrapper for Centering */
-.score-gauge-wrapper {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-width: 250px;
-}
-
-/* The Gauge Visual */
-.score-gauge {
-  width: 250px;
-  height: 125px; /* Half of width for semi-circle */
-  position: relative;
-  overflow: hidden;
-  border-radius: 125px 125px 0 0;
-  background: conic-gradient(
-    from -90deg at 50% 100%,
-    #e74c3c 0%, 
-    #f39c12 25%, 
-    #f1c40f 50%, 
-    #2ecc71 75%, 
-    #27ae60 100%
-  );
-}
-
-.score-gauge-fill {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  width: 250px;
-  height: 250px;
-  background: white;
-  border-radius: 50%;
-  transform-origin: 50% 0;
-  transition: transform 1s ease-in-out;
-  border-bottom: 3px solid #ccc; /* Needle effect */
-}
-
-.score-gauge-cover {
-  position: absolute;
-  width: 200px;
-  height: 100px;
-  background: white;
-  border-radius: 100px 100px 0 0;
-  top: 25px;
-  left: 25px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: center;
-  padding-bottom: 10px;
-  box-sizing: border-box;
-}
-
-.score-value {
-  font-size: 2.5rem;
-  font-weight: bold;
-}
-
-.score-label {
-  font-size: 0.9rem;
-  color: #555;
-}
-
-/* Feedback Cards Section */
-.feedback-section {
-  flex: 2;
-  min-width: 300px;
-}
-
-.feedback-section h3 {
-  margin-top: 0;
-}
-
-.feedback-grid {
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 15px;
+  grid-template-columns: 1fr; /* Single column layout for better flow */
+  gap: 30px; /* Space between sections */
 }
 
-.feedback-card {
-  border: 1px solid #ddd;
-  padding: 15px;
+/* Gauge Area */
+.cibil-gauge-container.improved-gauge {
+  grid-area: auto; /* Let grid place it */
+  display: flex;
+  justify-content: center; /* Center the gauge */
+  align-items: center;
+  position: relative;
+  min-height: 200px; /* Slightly smaller */
+  margin-bottom: 20px; /* Space below gauge */
+}
+.cibil-gauge { width: 250px; height: 125px; position: relative; overflow: hidden; border-radius: 125px 125px 0 0; background-color: #e9ecef; }
+.cibil-gauge-fill { width: 100%; height: 100%; position: absolute; top: 100%; left: 0; background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71); transform-origin: 50% 0%; transition: transform 1s ease-out; transform: rotate(0deg); }
+.cibil-gauge-cover { width: 200px; height: 100px; background: white; position: absolute; top: 25px; left: 25px; border-radius: 100px 100px 0 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; box-sizing: border-box; }
+.cibil-score-value { font-size: 2.5rem; font-weight: bold; color: #333; }
+.cibil-score-label { font-size: 0.9rem; color: #777; }
+
+/* NEW "Score Factors" Section */
+.cibil-factors {
+  grid-area: auto;
+  background-color: #f8f9fa;
+  padding: 20px;
   border-radius: 5px;
+  border: 1px solid #eee;
 }
-
-.feedback-card h4 {
-  margin: 0 0 5px 0;
-  color: #333;
+.cibil-factors h4 { margin-top: 0; margin-bottom: 15px; color: #555; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+.factor-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px dashed #eee; /* Subtle separator */
+  font-size: 0.95em;
 }
-
-.feedback-card p {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: bold;
+.factor-item:last-child {
+    border-bottom: none; /* No border for the last item */
 }
+.factor-item span { color: #555; }
+.factor-item strong { font-weight: 600; /* Use color from inline style */ }
 
-/* Feedback text colors */
-.feedback-card p.excellent { color: #27ae60; }
-.feedback-card p.good { color: #2ecc71; }
-.feedback-card p.average { color: #f39c12; }
-.feedback-card p.needs-improvement { color: #e74c3c; }
-.feedback-card p.just-starting { color: #3498db; }
+/* Tips Area (Improved Styling) */
+.cibil-tips.improved-tips {
+  grid-area: auto;
+  background-color: #f0f9ff; /* Light blue background */
+  padding: 20px;
+  border-radius: 5px;
+  border: 1px solid #cfe2ff; /* Blue border */
+  margin-top: 0; /* Removed extra top margin */
+}
+.cibil-tips h4 { margin-top: 0; color: #0c5464; } /* Darker blue heading */
+.cibil-tips ul { padding-left: 20px; margin-bottom: 0; }
+.cibil-tips li { margin-bottom: 8px; font-size: 0.9em; color: #17a2b8; } /* Blue text */
+.cibil-tips.excellent-performance p { color: #155724; font-weight: bold; margin-bottom: 0; } /* Green text for excellent */
+.cibil-tips.excellent-performance { background-color: #d4edda; border-color: #c3e6cb;} /* Green background */
+.cibil-tips.excellent-performance h4 { color: #155724;} /* Darker green */
+
+/* General Error Styling */
+.error { color: red; font-weight: bold; text-align: center; margin-top: 20px; }
 

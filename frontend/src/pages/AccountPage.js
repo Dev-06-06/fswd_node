@@ -1,71 +1,83 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { toast } from 'react-toastify';
 import './AccountPage.css';
 
 function AccountPage() {
-  const { user, updateUser, logout } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [fullName, setFullName] = useState(user.full_name || '');
+  // Function to get initials from name or username
+  const getInitials = (name, username) => {
+    if (name) {
+      const names = name.split(' ');
+      if (names.length > 1) {
+        return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+      }
+      return name.substring(0, 2).toUpperCase();
+    }
+    // Ensure username is not null/undefined before accessing substring
+    return username ? username.substring(0, 2).toUpperCase() : '??';
+  };
 
-  // Update local state if global user context changes
-  useEffect(() => {
-    setFullName(user.full_name || '');
-  }, [user.full_name]);
+  // Check if user exists before trying to get initials
+  const initials = user ? getInitials(user.full_name, user.username) : '??';
+  // Generate a placeholder image URL with initials
+  const placeholderImageUrl = `https://placehold.co/150x150/3498db/FFFFFF?text=${initials}`;
 
-  const defaultProfilePic = 'https://i.pravatar.cc/150';
-  const profilePicUrl = user.profilePicUrl || defaultProfilePic;
+  // Use the full_name if available, otherwise fallback to username
+  const displayName = user?.full_name || user?.username;
 
-  const handleUpdate = async () => {
-    try {
-      await axios.put('http://127.0.0.1:5000/api/account/profile', {
-        username: user.username,
-        full_name: fullName
-      });
-      updateUser({ full_name: fullName });
-      alert('Name updated successfully!');
-      setIsEditing(false);
-    } catch (err) {
-      alert('Failed to update name.');
-      console.error(err);
+  // No longer need profileDetails for uniqueId
+
+  const handleDelete = async () => {
+    // Use window.confirm for critical actions
+    const isConfirmed = window.confirm(
+      'Are you sure you want to delete your account? This action is irreversible and will remove all your data.'
+    );
+
+    if (isConfirmed && user?.username) {
+      try {
+        await axios.delete('http://127.0.0.1:5000/api/account/delete', {
+          data: { username: user.username }
+        });
+        toast.success('Account deleted successfully.');
+        logout(); // Log the user out and redirect them
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Failed to delete account.');
+        console.error(err);
+      }
+    } else if (!user?.username) {
+         toast.error("Cannot delete account: User information is missing.");
     }
   };
 
-  const handleDelete = async () => {
-    // ... (delete functionality is unchanged)
-  };
+  // Ensure user object exists before rendering
+  if (!user) {
+    // Or display a loading spinner/message
+    return <div>Loading account details...</div>;
+  }
 
   return (
     <div className="account-container">
       <h2>Your Account</h2>
       <div className="profile-card">
-        <img src={profilePicUrl} alt="Profile" className="profile-pic" />
+        <img src={placeholderImageUrl} alt="Profile Initials" className="profile-pic" />
         <div className="profile-info">
-          {!isEditing ? (
-            <>
-              <h3>{user.full_name || 'Your Name'}</h3>
-              <p><strong>Username:</strong> {user.username}</p>
-              <button onClick={() => setIsEditing(true)} className="edit-button">Edit Name</button>
-            </>
-          ) : (
-            <div className="edit-form">
-              <h3>Edit Your Name</h3>
-              <label>Full Name</label>
-              <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-              <div className="edit-buttons">
-                <button onClick={handleUpdate} className="save-button">Save</button>
-                <button onClick={() => setIsEditing(false)} className="cancel-button">Cancel</button>
-              </div>
-            </div>
-          )}
+          <h3>{displayName}</h3>
+          <p><strong>Username:</strong> {user.username}</p>
+          {/* --- REMOVED UNIQUE ID LINE --- */}
         </div>
       </div>
       <div className="account-actions">
-        {/* ... (delete account section is unchanged) ... */}
+        <h3>Account Management</h3>
+        <button onClick={handleDelete} className="delete-button">
+          Delete Account
+        </button>
       </div>
     </div>
   );
 }
 
 export default AccountPage;
+

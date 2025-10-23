@@ -1,60 +1,129 @@
+/* General Container */
 .dashboard-container {
   padding: 20px;
+  max-width: 1200px; /* Allow wider container for charts */
+  margin: 20px auto;
 }
 
+/* Stats Cards Section */
 .stats-cards {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Responsive grid */
   gap: 20px;
   margin-bottom: 30px;
 }
 
 .card {
   background-color: white;
-  padding: 20px;
+  padding: 25px; /* Slightly more padding */
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  flex: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0; /* Subtle border */
   text-align: center;
 }
 
 .card h3 {
   margin-top: 0;
+  margin-bottom: 10px;
   color: #555;
+  font-size: 1rem; /* Slightly smaller heading */
+  font-weight: 600;
 }
 
 .card p {
   font-size: 2rem;
   font-weight: bold;
   margin-bottom: 0;
+  line-height: 1.2;
 }
 
-.profit {
-  color: #27ae60; /* Green */
+.profit { color: #27ae60; }
+.loss { color: #c0392b; }
+
+.pnl-breakdown {
+  font-size: 0.85rem; /* Smaller text */
+  color: #777; /* Lighter color */
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-around;
+  padding-top: 10px;
+  border-top: 1px dashed #eee; /* Subtle separator */
 }
 
-.loss {
-  color: #c0392b; /* Red */
-}
-
+/* Charts Section */
 .charts-container {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 2fr 1fr; /* Maintain 2/3 and 1/3 layout */
   gap: 20px;
 }
 
+/* Styles for individual chart cards (consistent) */
 .chart-card {
   background-color: white;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
 }
 
-.error {
-  color: red;
-  font-weight: bold;
-}
 .line-charts-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 20px; /* Space between the two line charts */
 }
+
+.chart-card h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-bottom: 1px solid #eee; /* Separator */
+  padding-bottom: 10px;
+}
+
+/* Chart Header (for filters - future use or if added back) */
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.time-range-filters button { /* Style if you re-add filters */
+  background: #f0f0f0; border: 1px solid #ccc; padding: 8px 12px;
+  cursor: pointer; margin-left: 5px; border-radius: 4px; transition: background-color 0.2s;
+}
+.time-range-filters button:hover { background-color: #e0e0e0; }
+.time-range-filters button.active { background-color: #3498db; color: white; border-color: #3498db; }
+
+
+/* Error Styling */
+.error {
+  color: red;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #fbeae5;
+  border: 1px solid #e74c3c;
+  border-radius: 5px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .charts-container {
+    grid-template-columns: 1fr; /* Stack charts on smaller screens */
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-cards {
+     grid-template-columns: 1fr; /* Stack stat cards */
+  }
+   .chart-header {
+     flex-direction: column;
+     align-items: flex-start;
+     gap: 10px;
+   }
+}
+

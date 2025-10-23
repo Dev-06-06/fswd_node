@@ -2,7 +2,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import SellModal from '../components/SellModal';
-import Spinner from '../components/Spinner'; // --- 1. IMPORT SPINNER ---
+import InvestFdModal from '../components/InvestFdModal'; // --- 1. IMPORT THE NEW MODAL ---
+import Spinner from '../components/Spinner';
 import { toast } from 'react-toastify';
 import './HoldingsPage.css';
 
@@ -16,6 +17,9 @@ function HoldingsPage() {
   const [sellingHolding, setSellingHolding] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [formState, setFormState] = useState({ symbol: '', quantity: '', purchase_price: '' });
+
+  // --- 2. STATE TO MANAGE THE FD MODAL ---
+  const [investingFd, setInvestingFd] = useState(null);
 
   const fetchData = async () => {
     if (!user) { setLoading(false); return; }
@@ -67,6 +71,21 @@ function HoldingsPage() {
       toast.error(err.response?.data?.message || 'Failed to record sale.');
     }
   };
+  
+  // --- 3. FUNCTION TO HANDLE FD INVESTMENT ---
+  const handleConfirmInvestFd = async (investData) => {
+    try {
+      await axios.post('http://127.0.0.1:5000/api/holdings/add-fd', {
+        ...investData,
+        username: user.username
+      });
+      toast.success('FD investment recorded successfully!');
+      setInvestingFd(null); // Close the modal
+      fetchData(); // Refresh the holdings list
+    } catch (err) {
+      toast.error('Failed to record FD investment.');
+    }
+  };
 
   if (error && holdings.length === 0) return <div className="error-container">{error}</div>;
 
@@ -77,6 +96,15 @@ function HoldingsPage() {
   return (
     <div className="holdings-container">
       {sellingHolding && <SellModal holding={sellingHolding} onClose={() => setSellingHolding(null)} onConfirm={handleConfirmSell} />}
+      
+      {/* --- 4. RENDER THE NEW MODAL CONDITIONALLY --- */}
+      {investingFd && (
+        <InvestFdModal
+          fd={investingFd}
+          onClose={() => setInvestingFd(null)}
+          onConfirm={handleConfirmInvestFd}
+        />
+      )}
       
       <div className="holdings-header">
         <h2>{user && user.full_name ? `${user.full_name}'s Holdings` : 'Your Holdings'}</h2>
@@ -93,7 +121,6 @@ function HoldingsPage() {
         </form>
       )}
 
-      {/* --- 2. USE THE SPINNER --- */}
       {loading ? ( <Spinner /> ) : (
         <>
           <table className="holdings-table">
@@ -107,7 +134,10 @@ function HoldingsPage() {
                 holdings.map((h, i) => (
                   <tr key={`h-${i}`}>
                     <td>{h.instrument}</td><td>{h.quantity.toLocaleString('en-IN')}</td><td>{formatCurrency(h.avg_cost)}</td><td>{formatCurrency(h.current_price)}</td><td>{formatCurrency(h.total_value)}</td><td className={h.pnl >= 0 ? 'profit' : 'loss'}>{formatCurrency(h.pnl)}</td>
-                    <td>{h.type === 'Equity' && <button onClick={() => setSellingHolding(h)} className="sell-button">Sell</button>}</td>
+                    <td>
+                      {/* Only show Sell button for Equity type */}
+                      {h.type === 'Equity' && <button onClick={() => setSellingHolding(h)} className="sell-button">Sell</button>}
+                    </td>
                   </tr>
                 ))
               ) : ( <tr><td colSpan="7" style={{ textAlign: 'center' }}>You have no holdings yet. Add your first stock!</td></tr> )}
@@ -120,7 +150,12 @@ function HoldingsPage() {
               <thead><tr><th>Bank Name</th><th>Interest Rate</th><th>Action</th></tr></thead>
               <tbody>
                 {fdRates.map((fd, i) => (
-                  <tr key={`fd-${i}`}><td>{fd.bank_name}</td><td>{fd.rate}</td><td><button className="invest-button">Invest Now</button></td></tr>
+                  <tr key={`fd-${i}`}>
+                    <td>{fd.bank_name}</td>
+                    <td>{fd.rate}</td>
+                    {/* --- 5. CONNECT THE BUTTON TO THE MODAL --- */}
+                    <td><button onClick={() => setInvestingFd(fd)} className="invest-button">Invest Now</button></td>
+                  </tr>
                 ))}
               </tbody>
             </table>

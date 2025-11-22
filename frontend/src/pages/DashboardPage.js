@@ -1,139 +1,229 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
 import { AuthContext } from '../context/AuthContext';
 import Spinner from '../components/Spinner';
-import './DashboardPage.css'; // Ensure you have the corresponding CSS file
+import { toast } from 'react-toastify';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from 'recharts';
+import './DashboardPage.css';
 
+// Define consistent colors for charts
+const COLORS = ['#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#e74c3c', '#1abc9c'];
+
+// Helper function to format currency
+const formatCurrency = (value) => {
+  if (typeof value !== 'number') return 'N/A';
+  return value.toLocaleString('en-IN', { // Use 'en-IN' locale
+    style: 'currency',
+    currency: 'INR', // Set currency to INR
+    minimumFractionDigits: 2,
+  });
+};
+
+
+// --- Main Dashboard Component ---
 function DashboardPage() {
   const { user } = useContext(AuthContext);
-  const [summaryData, setSummaryData] = useState(null);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
-      if (!user) { setLoading(false); return; }
       setLoading(true);
+      setError('');
       try {
-        const response = await axios.get(`http://127.0.0.1:5000/dashboard/summary?username=${user.username}`);
-        setSummaryData(response.data);
+        // Fetch summary data from the backend using relative URL (proxy)
+        const response = await axios.get(`/dashboard/summary?username=${user.username}`);
+        setData(response.data);
       } catch (err) {
-        setError('Failed to fetch summary data.');
+        console.error("Dashboard fetch error:", err);
+        setError('Failed to fetch dashboard data.');
+        toast.error('Failed to fetch dashboard data.');
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
+    
+    // Set up a refresh interval for the dashboard (e.g., every 60 seconds)
+    const intervalId = setInterval(fetchData, 60000); 
+
+    // Cleanup function to clear the interval
+    return () => clearInterval(intervalId);
   }, [user]);
 
   if (loading) {
+    return <Spinner />;
+  }
+
+  if (error || !data) {
     return (
         <div className="dashboard-container">
-            <Spinner />
+            <div className="dashboard-error">{error || 'No data available.'}</div>
         </div>
     );
   }
 
-  if (error) return <div className="error">{error}</div>;
+  // Calculate Asset Allocation percentages for the Pie Chart
+  const totalAllocValue = data.assetAllocation.reduce((sum, item) => sum + item.value, 0);
+  const pieChartData = data.assetAllocation.map((item, index) => ({
+    name: item.name,
+    value: item.value,
+    percentage: totalAllocValue > 0 ? (item.value / totalAllocValue) * 100 : 0,
+    fill: COLORS[index % COLORS.length],
+  }));
 
-  // Check if summaryData exists and has necessary properties before rendering
-  if (!summaryData || summaryData.portfolioHistory === undefined || summaryData.profitLossHistory === undefined || summaryData.assetAllocation === undefined) {
-      return (
-          <div className="dashboard-container">
-              <h2>Welcome, {user.full_name || user.username}!</h2>
-              <p>Your dashboard is currently empty or data is unavailable. Go to the Holdings page to add investments!</p>
-          </div>
-      );
-  }
+  // Prepare P&L History for the Chart
+  // We add a 'fill' color property to the data objects based on PnL
+  const chartData = data.profitLossHistory.map(item => ({
+    name: item.name,
+    pnl: item.pnl,
+    value: item.value, // Assuming backend sends total value here if needed, otherwise generic
+  }));
 
+  const totalReturn = data.totalProfitLoss;
+  const returnClass = totalReturn >= 0 ? 'metric-profit' : 'metric-loss';
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042']; // Added more colors if needed
-  const formatCurrency = (value) => value.toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 });
 
   return (
     <div className="dashboard-container">
-      {/* --- STATS CARDS --- */}
-      <div className="stats-cards">
-        <div className="card">
-          <h3>Portfolio Value</h3>
-          <p>{formatCurrency(summaryData.totalPortfolioValue)}</p>
+      <div className="dashboard-header">
+        <h1 className="dashboard-title">
+            Overview
+        </h1>
+        <span className="welcome-text">Welcome back, {user.full_name || user.username}</span>
+      </div>
+
+      <div className="metric-cards-grid">
+        {/* --- METRIC CARD 1: Total Portfolio Value --- */}
+        <div className="dashboard-widget metric-card primary-metric">
+          <div className="metric-icon-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div>
+            <div className="metric-label">Net Worth</div>
+            <div className="metric-value">
+                {formatCurrency(data.totalPortfolioValue)}
+            </div>
+          </div>
         </div>
-        <div className="card">
-          <h3>Net Profit/Loss</h3>
-          <p className={summaryData.totalProfitLoss >= 0 ? 'profit' : 'loss'}>
-            {formatCurrency(summaryData.totalProfitLoss)}
-          </p>
-          <div className="pnl-breakdown">
-            <span>Unrealized: {formatCurrency(summaryData.unrealizedPnl)}</span>
-            <span>Realized: {formatCurrency(summaryData.realizedPnl)}</span>
+
+        {/* --- METRIC CARD 2: Total P&L --- */}
+        <div className={`dashboard-widget metric-card ${returnClass}`}>
+           <div className="metric-icon-wrapper">
+            {totalReturn >= 0 ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+            )}
+          </div>
+          <div>
+            <div className="metric-label">Total Returns</div>
+            <div className="metric-value">
+                {totalReturn >= 0 ? '+' : ''}{formatCurrency(totalReturn)}
+            </div>
+            <div className="metric-subtext">
+                Unrealized: {formatCurrency(data.unrealizedPnl)} • Realized: {formatCurrency(data.realizedPnl)}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* --- CHARTS CONTAINER --- */}
-      <div className="charts-container">
-        {/* Wrapper for the two line charts */}
-        <div className="line-charts-wrapper">
-          {/* Portfolio Value History */}
-          <div className="chart-card">
-            <h3>Portfolio Value History</h3>
+      <div className="charts-grid">
+        {/* --- CHART 1: Asset Allocation Pie Chart --- */}
+        <div className="dashboard-widget chart-widget allocation-widget">
+          <h3 className="widget-title">Asset Allocation</h3>
+          <div className="chart-content">
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={summaryData.portfolioHistory}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip formatter={(value) => formatCurrency(value)} />
-                <Legend />
-                <Line type="monotone" dataKey="value" stroke="#8884d8" name="Value" activeDot={{ r: 8 }} />
-              </LineChart>
+                <PieChart>
+                <Pie
+                    data={pieChartData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={5}
+                >
+                    {pieChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} stroke="none" />
+                    ))}
+                </Pie>
+                <Tooltip 
+                    formatter={(value) => formatCurrency(value)} 
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                />
+                </PieChart>
             </ResponsiveContainer>
-          </div>
-
-          {/* Profit/Loss History */}
-          <div className="chart-card">
-            <h3>Profit/Loss History</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={summaryData.profitLossHistory}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip formatter={(value) => formatCurrency(value)} />
-                <Legend />
-                <ReferenceLine y={0} stroke="#000" strokeDasharray="3 3" />
-                <Line type="monotone" dataKey="pnl" stroke="#82ca9d" name="P/L" />
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="allocation-legend">
+                {pieChartData.map((entry, index) => (
+                <div key={`legend-${index}`} className="legend-item">
+                    <span className="legend-dot" style={{ backgroundColor: entry.fill }}></span>
+                    <div className="legend-text">
+                        <span className="legend-name">{entry.name}</span>
+                        <span className="legend-percent">{entry.percentage.toFixed(1)}%</span>
+                    </div>
+                </div>
+                ))}
+            </div>
           </div>
         </div>
 
-        {/* Account Overview Pie Chart */}
-        <div className="chart-card">
-          <h3>Account Overview</h3>
+        {/* --- CHART 2: Profit/Loss History (Area Chart) --- */}
+        <div className="dashboard-widget chart-widget history-widget">
+          <h3 className="widget-title">Performance History</h3>
           <ResponsiveContainer width="100%" height={300}>
-            {summaryData.assetAllocation && summaryData.assetAllocation.length > 0 ? (
-              <PieChart>
-                <Pie
-                  data={summaryData.assetAllocation}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {summaryData.assetAllocation.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => formatCurrency(value)} />
-                <Legend />
-              </PieChart>
-            ) : (
-              <div style={{ textAlign: 'center', paddingTop: '50px', color: '#888' }}>No asset allocation data available.</div>
-            )}
+            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorPnl" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3498db" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#3498db" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+              <XAxis 
+                dataKey="name" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{fill: '#999', fontSize: 12}} 
+                dy={10}
+              />
+              <YAxis 
+                tickFormatter={(val) => `₹${val}`} 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{fill: '#999', fontSize: 12}} 
+              />
+              <Tooltip 
+                formatter={(value) => formatCurrency(value)}
+                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="pnl" 
+                stroke="#3498db" 
+                strokeWidth={3}
+                fillOpacity={1} 
+                fill="url(#colorPnl)" 
+              />
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
@@ -142,4 +232,3 @@ function DashboardPage() {
 }
 
 export default DashboardPage;
-

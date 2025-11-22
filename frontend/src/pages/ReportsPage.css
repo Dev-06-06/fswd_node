@@ -1,118 +1,269 @@
-/* General Container */
+/* --- Global Page & Widget Styles --- */
 .reports-container {
   padding: 20px;
-  max-width: 900px; /* Adjusted width for better layout */
+  max-width: 900px;
   margin: 20px auto;
 }
-
-/* Header and View Toggle */
 .reports-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
   margin-bottom: 25px;
   padding-bottom: 15px;
   border-bottom: 1px solid #eee;
 }
 .reports-header h2 { margin: 0; color: #333; }
-.view-toggle button { background: #f0f0f0; border: 1px solid #ccc; padding: 10px 15px; cursor: pointer; margin-left: -1px; transition: background-color 0.2s, color 0.2s; }
-.view-toggle button:first-child { border-radius: 5px 0 0 5px; margin-left: 0; }
-.view-toggle button:last-child { border-radius: 0 5px 5px 0; }
-.view-toggle button.active { background-color: #3498db; color: white; border-color: #3498db; z-index: 2; position: relative; }
-.view-toggle button:not(.active):hover { background-color: #e0e0e0; }
+.report-widget {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 25px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e0e0e0;
+}
+.widget-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.inflation-note {
+  font-size: 0.9rem;
+  color: #888;
+  margin-top: -10px;
+  margin-bottom: 15px;
+  background-color: #f9f9f9;
+  padding: 10px;
+  border-radius: 6px;
+}
 
-/* General Table Styling */
-.reports-table { width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border-radius: 5px; overflow: hidden; }
-.reports-table th, .reports-table td { border: 1px solid #ddd; padding: 12px 15px; text-align: left; vertical-align: middle; }
-.reports-table th { background-color: #f7f9fc; font-weight: 600; color: #555; border-bottom: 2px solid #ddd; }
-.reports-table tr:nth-child(even) { background-color: #fdfdfd; }
+/* --- View Toggle (Tabs) --- */
+.view-toggle {
+  display: flex;
+  background-color: #f4f4f4;
+  border-radius: 8px;
+  padding: 5px;
+}
+.view-toggle button {
+  background-color: transparent;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #555;
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+}
+.view-toggle button:hover { background-color: #e9e9e9; }
+.view-toggle button.active {
+  background-color: #fff;
+  color: #007bff;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Tables --- */
+.reports-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+.reports-table th, .reports-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #f0f0f0; /* Lighter border */
+}
+.reports-table th {
+  background-color: #f9f9f9;
+  font-weight: 600;
+  color: #555;
+  font-size: 0.9rem;
+}
 .reports-table tr:hover { background-color: #f1f5f9; }
+.reports-table tr:last-child td { border-bottom: none; }
 
-/* Transaction Type Styling */
-.tx-type { padding: 4px 8px; border-radius: 4px; color: white; font-weight: bold; font-size: 0.8em; text-transform: uppercase; display: inline-block; }
-.tx-type.buy { background-color: #27ae60; }
-.tx-type.sell { background-color: #c0392b; }
-.tx-type.deposit { background-color: #3498db; }
-
-/* Profit/Loss Colors (used in multiple tables and CIBIL) */
 :root { /* Define CSS variables for colors */
   --profit-color: #27ae60;
   --loss-color: #c0392b;
-  --warning-color: #f39c12;
+  --warning-color: #f39c12; /* We'll still use this for P/L loss */
+  --warning-color-dark: #d68910;
   --neutral-color: #3498db;
+  --growth-color: #1abc9c; /* --- THIS IS THE NEW COLOR --- */
 }
-.profit { color: var(--profit-color); }
-.loss { color: var(--loss-color); }
+.profit { color: var(--profit-color); font-weight: 500; }
+.loss { color: var(--loss-color); font-weight: 500; }
+.tx-type {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  display: inline-block;
+}
+.tx-type.buy { background-color: #e6f7f0; color: var(--profit-color); }
+.tx-type.sell { background-color: #fdeeee; color: var(--loss-color); }
+.tx-type.deposit { background-color: #eaf3fe; color: var(--neutral-color); }
 
-/* Real Return Section Specific */
-.inflation-note { font-size: 0.9em; color: #777; text-align: center; margin: -10px 0 15px 0; }
+/* --- INVESTOR SCORE UPGRADE STYLES --- */
 
-/* --- CIBIL SCORE VIEW STYLING (IMPROVED UI) --- */
-.cibil-score-view.improved-layout {
-  background-color: white;
-  padding: 30px;
+.investor-score-view {
+  /* Uses .report-widget styles for the container */
+  background-color: #ffffff;
   border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  display: grid;
-  grid-template-columns: 1fr; /* Single column layout for better flow */
-  gap: 30px; /* Space between sections */
+  padding: 25px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e0e0e0;
 }
 
-/* Gauge Area */
-.cibil-gauge-container.improved-gauge {
-  grid-area: auto; /* Let grid place it */
+.investor-score-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 30px;
+  align-items: center;
+}
+
+/* --- Column 1: Gauge --- */
+.investor-gauge-wrapper {
   display: flex;
-  justify-content: center; /* Center the gauge */
+  justify-content: center;
   align-items: center;
   position: relative;
-  min-height: 200px; /* Slightly smaller */
-  margin-bottom: 20px; /* Space below gauge */
+  min-height: 200px;
+}
+.cibil-gauge-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  min-height: 200px;
+  margin-bottom: 20px;
 }
 .cibil-gauge { width: 250px; height: 125px; position: relative; overflow: hidden; border-radius: 125px 125px 0 0; background-color: #e9ecef; }
-.cibil-gauge-fill { width: 100%; height: 100%; position: absolute; top: 100%; left: 0; background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71); transform-origin: 50% 0%; transition: transform 1s ease-out; transform: rotate(0deg); }
+.cibil-gauge-fill {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  transform-origin: 50% 0%;
+  /* --- FIX: Removed 'background-color' transition, kept 'transform' --- */
+  transition: transform 1.5s cubic-bezier(0.19, 1, 0.22, 1);
+  transform: rotate(0deg); /* Starts at 0, JS will update this */
+
+  /* --- THIS IS THE FIX: Replaced Yellow with Teal --- */
+  /* This gradient now goes from Blue -> Teal -> Green */
+  background: linear-gradient(90deg, 
+    var(--neutral-color) 0%, 
+    var(--growth-color) 50%, /* WAS: --warning-color */
+    var(--profit-color) 100%
+  );
+  /* --- END OF FIX --- */
+}
 .cibil-gauge-cover { width: 200px; height: 100px; background: white; position: absolute; top: 25px; left: 25px; border-radius: 100px 100px 0 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 10px; box-sizing: border-box; }
-.cibil-score-value { font-size: 2.5rem; font-weight: bold; color: #333; }
+.cibil-score-value { font-size: 2.5rem; font-weight: bold; transition: color 1.5s ease; }
 .cibil-score-label { font-size: 0.9rem; color: #777; }
 
-/* NEW "Score Factors" Section */
-.cibil-factors {
-  grid-area: auto;
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 5px;
-  border: 1px solid #eee;
+/* --- Column 2: Breakdown Progress Bars --- */
+.investor-breakdown-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
-.cibil-factors h4 { margin-top: 0; margin-bottom: 15px; color: #555; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-.factor-item {
+
+.factor-bar-container {
+  width: 100%;
+}
+
+.factor-bar-label {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.factor-bar-label span {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  /* --- NEW: Icon styles --- */
+  display: flex;
   align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px dashed #eee; /* Subtle separator */
-  font-size: 0.95em;
+  gap: 8px;
 }
-.factor-item:last-child {
-    border-bottom: none; /* No border for the last item */
-}
-.factor-item span { color: #555; }
-.factor-item strong { font-weight: 600; /* Use color from inline style */ }
 
-/* Tips Area (Improved Styling) */
-.cibil-tips.improved-tips {
-  grid-area: auto;
-  background-color: #f0f9ff; /* Light blue background */
-  padding: 20px;
+.factor-bar-label strong {
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: color 1s ease;
+}
+
+/* --- NEW: Icon styles --- */
+.factor-icon {
+  width: 18px;
+  height: 18px;
+  opacity: 0.7;
+}
+
+.factor-bar {
+  width: 100%;
+  height: 10px;
+  background-color: #e9ecef;
   border-radius: 5px;
-  border: 1px solid #cfe2ff; /* Blue border */
-  margin-top: 0; /* Removed extra top margin */
+  overflow: hidden;
 }
-.cibil-tips h4 { margin-top: 0; color: #0c5464; } /* Darker blue heading */
+
+.factor-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  /* --- NEW: Animated Transition --- */
+  transition: width 1.5s cubic-bezier(0.19, 1, 0.22, 1), background-color 1s ease;
+  width: 0%; /* Start at 0, JS will update this */
+}
+
+.factor-points {
+  text-align: right;
+  font-size: 0.85rem;
+  color: #777;
+  margin-top: 5px;
+}
+
+/* --- Tips (Full Width Below Grid) --- */
+.cibil-tips {
+  grid-column: 1 / -1;
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.cibil-tips.improved-tips {
+  background-color: #f0f9ff;
+  border: 1px solid #cfe2ff;
+}
+.cibil-tips h4 { margin-top: 0; margin-bottom: 10px; color: #0c5464; }
 .cibil-tips ul { padding-left: 20px; margin-bottom: 0; }
-.cibil-tips li { margin-bottom: 8px; font-size: 0.9em; color: #17a2b8; } /* Blue text */
-.cibil-tips.excellent-performance p { color: #155724; font-weight: bold; margin-bottom: 0; } /* Green text for excellent */
-.cibil-tips.excellent-performance { background-color: #d4edda; border-color: #c3e6cb;} /* Green background */
-.cibil-tips.excellent-performance h4 { color: #155724;} /* Darker green */
+.cibil-tips li { margin-bottom: 8px; font-size: 0.95rem; line-height: 1.5; }
+.cibil-tips.excellent-performance { background-color: #d4edda; border-color: #c3e6cb; }
+.cibil-tips.excellent-performance h4 { color: #155724; }
+.cibil-tips.excellent-performance p { color: #155724; font-weight: 500; margin-bottom: 0; }
 
-/* General Error Styling */
-.error { color: red; font-weight: bold; text-align: center; margin-top: 20px; }
-
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .investor-score-grid {
+    grid-template-columns: 1fr;
+  }
+  .reports-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .view-toggle {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .view-toggle button {
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+}

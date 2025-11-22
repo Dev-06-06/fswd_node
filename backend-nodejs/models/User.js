@@ -5,12 +5,11 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    index: true,
   },
   email: {
     type: String,
     unique: true,
-    sparse: true, // Allows multiple null values, but only one of each email
+    sparse: true,
   },
   phone_number: {
     type: String,
@@ -23,9 +22,22 @@ const UserSchema = new mongoose.Schema({
   },
   full_name: {
     type: String,
+    default: '',
   },
-  profile_pic_url: {
+  
+  // --- REMOVED profile_pic_url field ---
+
+  kite_access_token: {
     type: String,
+    default: null,
+  },
+  kite_public_token: {
+    type: String,
+    default: null,
+  },
+  created_at: {
+    type: Date,
+    default: Date.now,
   },
 });
 

@@ -37,7 +37,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// --- Login User ---
+// --- Login User (UPDATED) ---
 router.post('/login', async (req, res) => {
   const { identifier, password } = req.body;
   if (!identifier || !password) {
@@ -62,14 +62,20 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials or password' });
     }
 
+    // --- THIS IS THE CHANGE ---
+    // We now send the kite_public_token (which is safe)
+    // so the frontend knows if the user is connected.
     res.status(200).json({
       message: `Login successful! Welcome ${user.username}`,
       user: {
         username: user.username,
         profile_pic_url: user.profile_pic_url,
         full_name: user.full_name,
+        kite_public_token: user.kite_public_token // Send this to the frontend
       },
     });
+    // --- END OF CHANGE ---
+
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ message: 'Server Error' });

@@ -4,9 +4,17 @@ const axios = require('axios');
 const Holding = require('../models/Holding');
 const Transaction = require('../models/Transaction');
 
-const finnhub_api_key = process.env.FINNHUB_API_KEY;
+// --- REMOVE FINNHUB KEY ---
+// const finnhub_api_key = process.env.FINNHUB_API_KEY; // This line is no longer needed
 
-// --- Get Dashboard Summary (Stable Version) ---
+// Helper: Parse date string safely
+function parseDate(dateString) {
+  if (!dateString || typeof dateString !== 'string') return null;
+  const date = new Date(dateString);
+  return isNaN(date.getTime()) ? null : date;
+}
+
+// --- Get Dashboard Summary (NOW USES KITE PRICE API) ---
 router.get('/summary', async (req, res) => {
   const { username } = req.query;
   if (!username) {
@@ -20,38 +28,53 @@ router.get('/summary', async (req, res) => {
     let total_investment_value = 0;
     const asset_allocation = { Equity: 0, Bonds: 0, FD: 0 };
 
-    const holdingPromises = real_holdings.map(async (holding) => {
-      let current_price = holding.avg_cost;
+    // Get symbols for price fetch
+    const equitySymbols = real_holdings
+        .filter(h => h.type === 'Equity' && h.symbol)
+        .map(h => h.symbol);
+
+    let livePrices = {};
+    if (equitySymbols.length > 0) {
+        try {
+            // --- THIS IS THE CHANGE ---
+            // Call our broker route to get prices
+            const priceResponse = await axios.post(`http://127.0.0.1:${process.env.PORT || 5000}/api/broker/get-live-prices`, {
+                username: username,
+                symbols: equitySymbols
+            });
+            livePrices = priceResponse.data;
+            // --- END OF CHANGE ---
+        } catch (priceError) {
+            console.error("Error in get-live-prices call:", priceError.message);
+            // On failure, livePrices will be empty, and we'll use avg_cost
+        }
+    }
+
+    // Process holdings
+    for (const holding of real_holdings) {
       const holding_qty = holding.quantity;
       const holding_avg_cost = holding.avg_cost;
 
-      if (holding.type === 'Equity' && holding.symbol) {
-        try {
-          const url = `https://finnhub.io/api/v1/quote?symbol=${holding.symbol}&token=${finnhub_api_key}`;
-          const response = await axios.get(url);
-          current_price = response.data.c || holding_avg_cost;
-        } catch (e) {
-          console.error(`Finnhub API error for ${holding.symbol}: ${e.message}`);
-          current_price = holding_avg_cost;
+      if (holding.type === 'Equity') {
+        const current_price = livePrices[holding.symbol] || holding_avg_cost;
+        const current_value = holding_qty * current_price;
+        const investment_value = holding_qty * holding_avg_cost;
+        
+        total_portfolio_value += current_value;
+        total_investment_value += investment_value;
+        if (asset_allocation.hasOwnProperty(holding.type)) {
+            asset_allocation[holding.type] += current_value;
         }
       } else if (holding.type === 'FD') {
         const current_value = holding_qty * 1.07; // Mock 7%
         const investment_value = holding_qty * 1;
-        return { current_value, investment_value, type: holding.type };
-      }
-      
-      const current_value = holding_qty * current_price;
-      const investment_value = holding_qty * holding_avg_cost;
-      return { current_value, investment_value, type: holding.type };
-    });
-
-    const holdingResults = await Promise.all(holdingPromises);
-    for (const result of holdingResults) {
-        total_portfolio_value += result.current_value;
-        total_investment_value += result.investment_value;
-        if (asset_allocation.hasOwnProperty(result.type)) {
-            asset_allocation[result.type] += result.current_value;
+        
+        total_portfolio_value += current_value;
+        total_investment_value += investment_value;
+        if (asset_allocation.hasOwnProperty(holding.type)) {
+            asset_allocation[holding.type] += current_value;
         }
+      }
     }
     const unrealized_pnl = total_portfolio_value - total_investment_value;
 
@@ -59,15 +82,9 @@ router.get('/summary', async (req, res) => {
     const transactions = await Transaction.find({ username }).sort({ date: 1 }).lean();
     const buy_queue = {};
     let total_realized_pnl = 0;
-    
-    // --- ROBUSTNESS CHECK ---
-    // This logic will now safely skip transactions with invalid dates
     if (transactions.length > 0) {
       for (const tx of transactions) {
-        // --- THIS IS THE FIX ---
-        // Skip if date is invalid
-        if (!tx.date || typeof tx.date !== 'string') continue; 
-        
+        if (!parseDate(tx.date)) continue; // Robustness check
         const instrument = tx.instrument;
         const tx_quantity = tx.quantity;
         const tx_price = tx.price;
@@ -90,7 +107,6 @@ router.get('/summary', async (req, res) => {
         }
       }
     }
-    // --- END OF FIX ---
 
     // 3. Combine and Format
     const total_net_pnl = unrealized_pnl + total_realized_pnl;
@@ -115,4 +131,3 @@ router.get('/summary', async (req, res) => {
 });
 
 module.exports = router;
-

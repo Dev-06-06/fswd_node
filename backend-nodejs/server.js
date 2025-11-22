@@ -16,7 +16,10 @@ app.use(express.json()); // Allow app to accept JSON
 const MONGO_URI = process.env.MONGO_URI;
 mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB Connected...'))
-  .catch(err => console.log('Error connecting to MongoDB:', err.message));
+  .catch(err => {
+      console.error('Error connecting to MongoDB:', err.message);
+      process.exit(1); // Exit process with failure
+  });
 
 // --- API ROUTES ---
 // Import all route files
@@ -25,16 +28,12 @@ app.use('/api/account', require('./routes/account'));
 app.use('/api/holdings', require('./routes/holdings'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/dashboard', require('./routes/dashboard'));
-
-// --- THIS IS THE FIX ---
-// The route file 'data.js' defines '/fd-rates'.
-// By mounting it at '/api', the full path becomes '/api/fd-rates',
-// which is what the frontend is requesting.
-app.use('/api', require('./routes/data'));
-// --- END OF FIX ---
-
+app.use('/api/data', require('./routes/data')); // Corrected path from previous step
+app.use('/api/search', require('./routes/search'));
+// --- ADD THIS NEW ROUTE ---
+app.use('/api/broker', require('./routes/broker'));
+// --- END OF CHANGE ---
 
 // --- Server Startup ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-

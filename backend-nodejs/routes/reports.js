@@ -4,7 +4,6 @@ const Holding = require('../models/Holding');
 const Transaction = require('../models/Transaction');
 
 // --- Helper: Parse date string safely ---
-// This function will be used to ensure we only process valid dates
 function parseDate(dateString) {
   if (!dateString || typeof dateString !== 'string') return null;
   const date = new Date(dateString);
@@ -37,7 +36,7 @@ router.get('/pnl', async (req, res) => {
     const transactions = await Transaction.find({ username }).sort({ date: 1 }).lean();
     const transactions_by_symbol = {};
     for (const tx of transactions) {
-      if (!parseDate(tx.date)) continue; // --- ROBUSTNESS CHECK ---
+      if (!parseDate(tx.date)) continue;
       if (!transactions_by_symbol[tx.instrument]) transactions_by_symbol[tx.instrument] = [];
       transactions_by_symbol[tx.instrument].push(tx);
     }
@@ -94,7 +93,7 @@ router.get('/real-returns', async (req, res) => {
     const transactions = await Transaction.find({ username }).sort({ date: 1 }).lean();
     const transactions_by_symbol = {};
     for (const tx of transactions) {
-      if (!parseDate(tx.date)) continue; // --- ROBUSTNESS CHECK ---
+      if (!parseDate(tx.date)) continue;
       if (!transactions_by_symbol[tx.instrument]) transactions_by_symbol[tx.instrument] = [];
       transactions_by_symbol[tx.instrument].push(tx);
     }
@@ -106,8 +105,8 @@ router.get('/real-returns', async (req, res) => {
       let total_inflation_adjustment = 0;
       let has_sales = false;
       for (const tx of transactions_by_symbol[symbol]) {
-        const tx_date = parseDate(tx.date); // Use the helper to get a Date object
-        if (!tx_date) continue; // Skip if date is invalid
+        const tx_date = parseDate(tx.date);
+        if (!tx_date) continue;
 
         if (tx.type === 'BUY') {
           buy_queue.push({ quantity: tx.quantity, price: tx.price, date: tx_date });
@@ -155,7 +154,7 @@ router.get('/real-returns', async (req, res) => {
   }
 });
 
-// --- Get Investment CIBIL Score ---
+// --- Get Investment "CIBIL" Score ---
 router.get('/cibil-score', async (req, res) => {
   const { username } = req.query;
   if (!username) {
@@ -181,7 +180,7 @@ router.get('/cibil-score', async (req, res) => {
     let total_realized_pnl = 0;
     if (transactions.length > 0) {
       for (const tx of transactions) {
-        if (!parseDate(tx.date)) continue; // --- ROBUSTNESS CHECK ---
+        if (!parseDate(tx.date)) continue;
         const instrument = tx.instrument;
         const tx_quantity = tx.quantity;
         const tx_price = tx.price;
@@ -212,7 +211,7 @@ router.get('/cibil-score', async (req, res) => {
     // 3. Discipline
     let discipline_feedback = "No History Yet";
     const firstValidTransaction = transactions.find(tx => parseDate(tx.date));
-    if (firstValidTransaction) { // --- ROBUSTNESS CHECK ---
+    if (firstValidTransaction) {
       const first_tx_date = parseDate(firstValidTransaction.date);
       days_investing = (new Date() - first_tx_date) / (1000 * 60 * 60 * 24); // Days
       discipline_score = Math.min(200, Math.floor(days_investing / 3.65));
@@ -223,7 +222,9 @@ router.get('/cibil-score', async (req, res) => {
       else if (days_investing >= 0) discipline_feedback = "Just Started!";
     }
     
-    const total_score = base_score + diversification_score + profitability_score + discipline_score;
+    // Total score (out of 900)
+    const total_score = Math.min(900, base_score + diversification_score + profitability_score + discipline_score);
+    
     const feedback = {
       "Diversification": diversification_score > 150 ? "Excellent" : diversification_score > 80 ? "Good" : "Needs Improvement",
       "Profitability": profitability_score > 150 ? "Excellent" : profitability_score > 100 ? "Good" : "Average",
@@ -234,9 +235,9 @@ router.get('/cibil-score', async (req, res) => {
       score: total_score,
       breakdown: {
         'Base Score': base_score,
-        Diversification: diversification_score,
-        Profitability: profitability_score,
-        Discipline: discipline_score,
+        'Diversification': diversification_score,
+        'Profitability': profitability_score,
+        'Discipline': discipline_score,
       },
       feedback,
     });
@@ -247,4 +248,3 @@ router.get('/cibil-score', async (req, res) => {
 });
 
 module.exports = router;
-
